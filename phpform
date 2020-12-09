@@ -1,0 +1,253 @@
+//index.php
+<H1>Newsübersicht</H1>
+
+<P>
+<A HREF="neu.php">Neue News anlegen</A>
+</P>
+
+<?php
+$mysqli = new mysqli('127.0.0.1', 'root', '', 'news');
+$eintraege = $mysqli->query("SELECT * FROM news");
+
+
+foreach($eintraege as $eintrag) { 
+  echo "
+    <A 
+    HREF='show.php?id_news=".$eintrag['id_news']."'>
+    ".$eintrag['titel']."
+    </A>";
+  echo "<BR />";
+}
+//neu_speichern.php
+<?php
+
+$mysqli = new mysqli('127.0.0.1', 'root', '', 'news');
+$sqlbefehl = 'INSERT INTO news
+    (titel,text) 
+    VALUES 
+    ("'.$_POST['titel'].'",
+     "'.$_POST['text'].'")';
+
+$eintraege = $mysqli->query($sqlbefehl);
+
+header("location:index.php");
+//neu.php
+<FORM METHOD="POST" ACTION="neu_speichern.php">
+
+  <P>
+  Titel: <INPUT NAME="titel">
+  <BR />
+  Text: <TEXTAREA NAME="text"></TEXTAREA>
+  <P>
+  <INPUT TYPE="SUBMIT" VALUE="News speichern">
+  
+</FORM>
+//show.php 
+
+
+<?php
+$mysqli = new mysqli('127.0.0.1', 'root', '', 'news');
+$eintraege = $mysqli->query("SELECT * 
+    FROM news 
+    WHERE id_news=".$_GET['id_news']);
+
+
+foreach($eintraege as $eintrag) { 
+  echo "
+    <A HREF='index.php'>zurück</A>
+    <H1>".$eintrag['titel']."</H1>
+    <DIV id=text>".$eintrag['text']."</DIV>";
+}
+
+//NEWS: 
+//index.php 
+Hallo
+<pre>
+
+
+<?php
+
+require_once("../classes/News.class.php");
+
+$meinenews = new News();
+$abgerufeneNews = $meinenews->gib(5);
+
+var_dump($abgerufeneNews);
+
+echo $abgerufeneNews->id_news;
+?>
+//show.php 
+<?php
+
+require_once("../../classes/News.class.php");
+
+$id_news = $_GET['id_news'];
+
+$abgerufeneNews = News::gib($id_news);
+
+echo
+"
+<html>
+
+ <head>
+  <title>".$abgerufeneNews->titel."</title>
+  
+ </head>
+
+ <body>
+  <h1>".$abgerufeneNews->titel."</h1>
+
+  <p>".$abgerufeneNews->kurztext."</p>
+  <p>".$abgerufeneNews->langtext."</p>
+  <p><i>Datum: ".$abgerufeneNews->datum."</i></p>
+ </body>
+ 
+</html>
+";
+
+?>
+//news class
+<?php
+
+require_once("Helfer.class.php");
+
+class News {
+    
+    public $id_news;
+    public $datum;
+    public $autor;
+    public $titel;
+    public $kurztext;
+    public $langtext;
+    
+    public static function gib($id_news) {
+      Helfer::db_connect();
+      $eintraege = Helfer::db_select("SELECT * FROM news WHERE id_news = ".$id_news);
+        
+      $eintrag = $eintraege[0];
+      $temp_news = new News();
+      $temp_news->id_news = $eintrag->id_news;
+      $temp_news->datum = Helfer::convertMySQL2Datum($eintrag->datum);
+      $temp_news->autor = $eintrag->autor;
+      $temp_news->titel = $eintrag->titel;
+      $temp_news->kurztext = $eintrag->kurztext;
+      $temp_news->langtext = $eintrag->langtext;
+        
+      return $temp_news;
+    }
+    
+}
+//helferclass
+
+<?php
+
+
+class Helfer {
+    
+    static $db; // Datenbankverbindung
+    static $db_ini_file = __DIR__."/../conf/db.ini";
+    
+    static function db_connect() {
+        if (empty($db)) {
+            $ini = parse_ini_file(self::$db_ini_file);
+            self::$db = new mysqli(
+                $ini['server'],
+                $ini['user'],
+                $ini['passwd'],
+                $ini['db']
+            );           
+        }
+        
+    }
+    
+    static function db_query($sql) {
+        $result = self::$db->query($sql);
+        return $result;
+    }
+    
+    static function db_select($sql) {
+        $result = self::db_query($sql);
+        $objekte = array();
+        while($objekt = $result->fetch_object()) {
+           array_push($objekte,$objekt);
+        };
+        return $objekte;
+    }
+    
+    public static function convertMySQL2Datum($mysqldate) {
+        // 2020-12-24 12:23 in 24.12.2020 12:23
+        $datetemp = explode(" ",$mysqldate); 
+        $date = $datetemp[0]; // [0] ist Datum
+        $time = $datetemp[1]; // [1] ist Zeit
+        $parts = explode("-",$date);
+        // day: $parts[2]
+        // month: $parts[1]
+        // year: $parts[0]            
+        return $parts[2].".".$parts[1].".".$parts[0]." ".$time;
+    }
+    
+    
+}
+// Formular erstellen mit speichern
+
+<?php 
+//Verbindung erstellen
+$con= mysqli_connect('localhost' , 'root' , '' , 'Lernen');
+//Verbindung kontrollieren
+if(mysqli_connect_errno())
+{
+  echo "Fehler beim Verbindung". mysqli_connect_error();
+}
+if(isset($_POST["sp"]))
+{
+  Echo "Anrede : " . $_POST["Anrede"];
+  Echo "<br>";
+  Echo "Name : " . $_POST["Name"];
+  Echo "<br>";
+  Echo "Vorname : " . $_POST["Vorname"];
+  Echo "<br>";
+  $conn = new mysqli("localhost", "root", "", "Lernen");
+  $sql = "INSERT INTO uebung(anrede,name,vorname) values('" . $_POST["Anrede"] . "','" . $_POST["Name"] . "' ,'" . $_POST["Vorname"]  . "')";
+  $conn->query($sql);
+  $conn->close();
+}
+ ?>
+<html>
+<body>
+<form action="Speichern2.php" method="POST">
+  <select name="Anrede">
+    <option value=""> Bitte wählen </option>
+    <option value="F"> Frau</option>
+    <option value="M"> Mann </option>
+    <option value="D"> Diverse </option>
+  </select> <br>
+  Name: <input type="text" name="Name"> <br>
+  Vorname: <input type="text" name="Vorname"> <br>
+  <input type="hidden" name="sp" value="1">
+  <input type="submit" value="Senden" >
+  
+ </form> 
+</body>
+</html>
+
+//ausgeben mit select 
+
+<?php
+<H1>Newsübersicht</H1>
+ 
+<P>
+<A HREF="Speichern2.php">Neue News anlegen</A>
+</P>
+ 
+<?php 
+$mysqli = new mysqli('localhost', 'root', '', 'Lernen');
+$eintraege = $mysqli->query("SELECT * FROM uebung");
+ 
+foreach($eintraege as $eintrag) { 
+ echo "
+ <A 
+ HREF='Select.php?id_kunden=".$eintrag['id_kunden']."'>
+ ".$eintrag['name']."
+ </A>";
+ }?>
+ 
